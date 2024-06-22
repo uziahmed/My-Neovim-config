@@ -31,9 +31,6 @@ Plug 'joshdick/onedark.vim'
 " Use release branch (recommended)
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 
-" Or build from source code by using npm
-Plug 'neoclide/coc.nvim', {'branch': 'master', 'do': 'npm ci'}
-
 Plug 'preservim/nerdtree'
 
 Plug 'ryanoasis/vim-devicons'
@@ -43,16 +40,25 @@ Plug 'vim-airline/vim-airline-themes'
 
 Plug 'ghifarit53/tokyonight-vim'
 
-Plug 'windwp/nvim-autopairs'
+Plug 'Luxed/ayu-vim'
+
+Plug 'nvim-lua/plenary.nvim'
+Plug 'nvim-telescope/telescope.nvim', { 'tag': '0.1.6' }
+" or                                , { 'branch': '0.1.x' }
+Plug 'mfussenegger/nvim-dap'
+Plug 'mfussenegger/nvim-dap-python'
+
+Plug 'akinsho/toggleterm.nvim', {'tag' : '*'}
 
 call plug#end()
 
 set termguicolors
 
-let g:tokyonight_style = 'night' " available: night, storm
-let g:tokyonight_enable_italic = 1
-
-colorscheme tokyonight
+" let g:tokyonight_style = 'night' " available: night, storm
+" let g:tokyonight_enable_italic = 1
+set background=dark
+let g:ayucolor="dark"
+colorscheme ayu
 " https://raw.githubusercontent.com/neoclide/coc.nvim/master/doc/coc-example-config.vim
 
 " May need for Vim (not Neovim) since coc.nvim calculates byte offset by count
@@ -232,11 +238,83 @@ autocmd VimEnter * if argc() == 1 && isdirectory(argv()[0]) && !exists('s:std_in
 autocmd BufEnter * if winnr('$') == 1 && exists('b:NERDTree') && b:NERDTree.isTabTree() | call feedkeys(":quit\<CR>:\<BS>") | endif
 
 let g:airline#extensions#tabline#enabled = 1
-let g:airline_theme='tokyonight'
+"let g:airline_theme='tokyonight'
 
 let g:airline#extensions#tabline#left_sep = ' '
 let g:airline#extensions#tabline#left_alt_sep = '|'
 
 let g:airline#extensions#tabline#formatter = 'default'
 
+inoremap ( ()<Left>
+inoremap [ []<Left>
+inoremap { {}<Left>
+inoremap ' ''<Left>
+inoremap " ""<Left>
+inoremap ` ``<Left>
 
+" Remove matching brackets/quotes when the first one is deleted
+inoremap <expr> <BS> AutoPairsBackspace()
+
+function! AutoPairsBackspace()
+  let col = col('.') - 1
+  if col > 0
+    let char = getline('.')[col - 1]
+    let next_char = getline('.')[col]
+    if char == '(' && next_char == ')'
+      return "\<BS>\<Del>"
+    elseif char == '[' && next_char == ']'
+      return "\<BS>\<Del>"
+    elseif char == '{' && next_char == '}'
+      return "\<BS>\<Del>"
+    elseif char == '"' && next_char == '"'
+      return "\<BS>\<Del>"
+    elseif char == ''' && next_char == "'"
+      return "\<BS>\<Del>"
+    elseif char == '`' && next_char == '`'
+      return "\<BS>\<Del>"
+    endif
+  endif
+  return "\<BS>"
+endfunction
+
+" Find files using Telescope command-line sugar.
+nnoremap <leader>ff <cmd>Telescope find_files<cr>
+nnoremap <leader>fg <cmd>Telescope live_grep<cr>
+nnoremap <leader>fb <cmd>Telescope buffers<cr>
+nnoremap <leader>fh <cmd>Telescope help_tags<cr>
+
+" Using Lua functions
+nnoremap <leader>ff <cmd>lua require('telescope.builtin').find_files()<cr>
+nnoremap <leader>fg <cmd>lua require('telescope.builtin').live_grep()<cr>
+nnoremap <leader>fb <cmd>lua require('telescope.builtin').buffers()<cr>
+nnoremap <leader>fh <cmd>lua require('telescope.builtin').help_tags()<cr>
+
+lua require("toggleterm").setup{
+    \shell = "/usr/bin/fish"
+  \ }
+
+lua vim.keymap.set('t', '<esc>', [[<C-\><C-n>]])
+
+" Map Ctrl+t to :ToggleTerm in normal mode
+nnoremap <C-x> :Telescope<CR>
+
+" Map Ctrl+t to :ToggleTerm in insert mode
+inoremap <C-x> <Esc>:Telescope<CR>
+
+" Map Ctrl+t to :ToggleTerm in visual mode
+vnoremap <C-x> <Esc>:Telescope<CR>
+
+
+" Map Ctrl+Shift+t to :ToggleTerm in normal mode
+nnoremap <C-S-t> :ToggleTerm<CR>
+
+" Map Ctrl+Shift+t to :ToggleTerm in insert mode
+inoremap <C-S-t> <Esc>:ToggleTerm<CR>
+
+" Map Ctrl+Shift+t to :ToggleTerm in visual mode
+vnoremap <C-S-t> <Esc>:ToggleTerm<CR>
+
+lua require("dap-python").setup("python")
+
+let g:copilot_no_tab_map = v:true
+imap <silent><script><expr> <C-e> coc#pum#visible() ? coc#pum#cancel() : copilot#Accept("\<C-e>")
